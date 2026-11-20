@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subtitles</title>
+<link rel="icon" href="/favicon.svg">
+<link rel="stylesheet" href="/app.css">
+<style>
+/* ---------- top bar ---------- */
+.top { height: 48px; display: flex; align-items: center; gap: 12px; padding: 0 24px; border-bottom: 1px solid var(--rule-soft); position: sticky; top: 0; z-index: 5; background: rgba(27, 28, 30, .92); backdrop-filter: blur(8px); }
+.mark { display: flex; align-items: center; gap: 9px; font-weight: 600; letter-spacing: .1px; }
+.mark svg { width: 20px; height: 20px; }
+.top .right { margin-left: auto; display: flex; gap: 14px; align-items: center; }
+#gitstat { color: var(--mute); font-size: 12px; }
+#gitstat.bad { color: var(--danger); }
+
+/* ---------- page head ---------- */
+main { max-width: 1240px; margin: 0 auto; padding: 44px 24px 80px; }
+.head { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 30px; }
+.head h1 {
+  margin: 0; font: var(--display); letter-spacing: -.8px; color: #fff;
+  /* set like a burned in caption: white fill, hard dark outline */
+  -webkit-text-stroke: 7px #0b0b0c; paint-order: stroke fill;
+}
+.head .sub { color: var(--mute); margin-top: 10px; }
+.head .grow { flex: 1; min-width: 200px; }
+.head input { width: 240px; }
+.head .search { position: relative; }
+
+/* ---------- project grid: a contact sheet of 9:16 posters ---------- */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 34px 22px; }
+.proj { position: relative; display: grid; gap: 10px; cursor: pointer; outline: none; }
+.poster {
+  position: relative; aspect-ratio: 9 / 16; border-radius: 8px; overflow: hidden;
+  background: var(--well) center / cover no-repeat; box-shadow: 0 0 0 1px var(--rule-soft);
+  transition: box-shadow .14s;
+}
+.proj:hover .poster, .proj:focus-visible .poster { box-shadow: 0 0 0 2px var(--signal); }
+.poster .nov { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; text-align: center; color: var(--mute); font-size: 12px; }
+.poster .prog { position: absolute; left: 0; right: 0; bottom: 0; padding: 40px 12px 12px; display: grid; gap: 8px; font-size: 12px; background: linear-gradient(transparent, rgba(0, 0, 0, .88)); }
+.proj .nm { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.proj .mt { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; color: var(--mute); font-size: 12px; }
+.proj .more { position: absolute; right: 8px; top: 8px; width: 28px; padding: 0; opacity: 0; background: rgba(15, 15, 16, .7); border-color: transparent; font-size: 15px; letter-spacing: 1px; }
+.proj:hover .more, .proj .more:focus-visible { opacity: 1; }
+.flag { color: var(--warn); }
+.bad { color: var(--danger); }
+.run { color: var(--signal); }
+
+.newproj .poster { display: grid; place-items: center; background: transparent; box-shadow: none; border: 1.5px dashed #46474d; }
+.newproj:hover .poster, .newproj:focus-visible .poster { border-color: var(--signal); box-shadow: none; }
+.newproj .poster div { display: grid; gap: 8px; justify-items: center; color: var(--mute); }
+.newproj .plus { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--raise); color: var(--text); font-size: 22px; line-height: 1; transition: background .14s, color .14s; }
+.newproj:hover .plus { background: var(--signal); color: var(--signal-ink); }
+
+.empty { max-width: 460px; padding: 60px 0; }
+.empty h2 { margin: 0 0 8px; font-size: 18px; }
+.empty p { margin: 0 0 20px; color: var(--mute); line-height: 1.6; }
+
+/* ---------- new project sheet ---------- */
+.wz { width: min(640px, 100%); }
+.wz .hd { display: flex; align-items: center; gap: 12px; padding: 16px 20px 14px; border-bottom: 1px solid var(--rule-soft); }
+.wz .hd b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.steps { display: flex; gap: 4px; margin-left: auto; }
+.steps span { width: 22px; height: 3px; border-radius: 2px; background: var(--rule); transition: background .2s; }
+.steps span.on { background: var(--signal); }
+.wz .bd { padding: 20px; overflow: auto; display: grid; gap: 18px; }
+.wz .ft { padding: 14px 20px; border-top: 1px solid var(--rule-soft); display: flex; gap: 8px; align-items: center; }
+.wz .ft .grow { flex: 1; }
+
+.src { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.opt { height: auto; flex-direction: column; align-items: flex-start; gap: 3px; padding: 14px 16px; text-align: left; border-radius: var(--r-panel); white-space: normal; }
+.opt b { font-size: 14px; font-weight: 600; }
+.opt span { color: var(--mute); font-size: 12px; }
+.opt:hover { border-color: var(--signal); }
+.lbl { color: var(--mute); font-size: 12px; margin-bottom: 6px; }
+.recent { display: grid; max-height: 220px; overflow: auto; border: 1px solid var(--rule-soft); border-radius: var(--r-panel); padding: 4px; background: var(--well); }
+.recent .it { display: flex; gap: 12px; align-items: baseline; padding: 7px 10px; border-radius: 6px; cursor: pointer; }
+.recent .it:hover { background: var(--raise); }
+.recent .it .n { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.recent .it .m { display: flex; gap: 10px; color: var(--mute); font-size: 11px; white-space: nowrap; }
+.recent .note { padding: 8px 10px; color: var(--mute); }
+.pathrow { display: flex; gap: 6px; }
+.pathrow input { flex: 1; }
+
+.picked { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: var(--r-panel); background: var(--signal-wash); box-shadow: inset 3px 0 0 var(--signal); }
+.picked .grow { flex: 1; min-width: 0; }
+.picked .n { font-weight: 600; word-break: break-all; }
+.picked .m { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--mute); font-size: 12px; margin-top: 2px; }
+
+.form { display: grid; grid-template-columns: 148px 1fr; gap: 12px 16px; align-items: center; }
+.form > label { color: var(--mute); }
+.form .help { grid-column: 2; color: var(--faint); font-size: 12px; margin-top: -6px; line-height: 1.5; }
+.form .check { display: flex; gap: 8px; align-items: center; color: var(--text); cursor: pointer; }
+
+.runner { display: grid; gap: 14px; padding: 6px 0; }
+.runner .big { font-size: 16px; font-weight: 600; }
+.runner .bar { height: 6px; }
+.runner ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; color: var(--faint); }
+.runner li { display: flex; align-items: center; gap: 10px; }
+.runner li::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--rule); flex: none; }
+.runner li.done { color: var(--mute); }
+.runner li.done::before { background: var(--ok); }
+.runner li.cur { color: var(--text); }
+.runner li.cur::before { background: var(--signal); box-shadow: 0 0 0 4px rgba(242, 194, 48, .18); }
+.runner .hint { color: var(--mute); }
+
+.closed { min-height: 100vh; display: grid; place-items: center; text-align: center; }
+.closed h2 { margin: 0 0 8px; font-size: 20px; }
+.closed p { margin: 0; color: var(--mute); line-height: 1.7; }
+
+@media (max-width: 640px) {
+  main { padding-top: 28px; }
+  .head h1 { font-size: 36px; }
+  .head input { width: 100%; }
+  .head .search { flex: 1; }
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 24px 14px; }
+  .src { grid-template-columns: 1fr; }
+  .form { grid-template-columns: 1fr; gap: 6px; }
+  .form .help { grid-column: 1; margin: 0 0 8px; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <span class="mark"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#26272a"/><rect x="7" y="17" width="18" height="3.4" rx="1.7" fill="#f2c230"/><rect x="10" y="22.4" width="12" height="3.4" rx="1.7" fill="#ece9e3"/></svg>Subtitles</span>
+  <div class="right">
+    <span id="gitstat"></span>
+    <button id="quit" class="quiet" title="Saves, syncs and stops the app">Quit app</button>
+  </div>
+</header>
+<main>
+  <div class="head">
+    <div class="grow"><h1>Projects</h1><div class="sub" id="count"></div></div>
+    <div class="search"><input id="search" type="search" placeholder="Search projects" aria-label="Search projects"></div>
+    <button class="primary" id="newbtn" title="New project (Cmd+N)">New project</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</main>
+<div class="menu" id="menu"></div>
+
+<div class="modal" id="wz"><div class="sheet wz" role="dialog" aria-modal="true" aria-labelledby="wztitle">
+  <div class="hd"><b id="wztitle">New project</b><div class="steps" id="wzsteps" aria-hidden="true"><span></span><span></span><span></span></div><button class="quiet" id="wzx">Close</button></div>
+
+  <div class="bd" id="s1">
+    <div class="src">
+      <button class="opt" id="pick"><b>Choose a video file</b><span>Opens a Finder window</span></button>
+      <button class="opt" id="fromres"><b>From DaVinci Resolve</b><span>Uses the timeline you have open</span></button>
+    </div>
+    <div id="resolvelist" style="display:none"><div class="lbl">On the Resolve timeline</div><div class="recent" id="reslist"></div></div>
+    <div><div class="lbl">Recent videos in Downloads, Movies and Desktop</div><div class="recent" id="recent"><div class="note">Looking for videos</div></div></div>
+    <div><div class="lbl">Or paste a path</div><div class="pathrow"><input id="pathin" placeholder="~/Movies/interview.mp4"><button id="pathgo">Use this file</button></div></div>
+    <div class="err" id="s1err"></div>
+  </div>
+
+  <div class="bd" id="s2" style="display:none">
+    <div class="picked"><div class="grow"><div class="n" id="pkname"></div><div class="m" id="pkmeta"></div></div><button class="quiet" id="change">Change</button></div>
+    <div class="form">
+      <label for="fname">Project name</label><input id="fname">
+      <label>People talking</label><div><div class="seg" id="fspk"></div></div>
+      <div class="help">Auto works most of the time. Setting the real number helps when two voices sound alike.</div>
+      <label for="fnames">Their names</label><input id="fnames" placeholder="Host, Guest (optional)">
+      <div class="help">In the order they first talk. You can rename and merge speakers in the editor later.</div>
+      <label for="fvocab">Spelling help</label><input id="fvocab" placeholder="Names, slang or brands Whisper should spell right">
+      <label for="flang">Language</label><select id="flang">
+        <option value="en">English</option><option value="auto">Detect it</option><option value="es">Spanish</option><option value="fr">French</option>
+        <option value="de">German</option><option value="pt">Portuguese</option><option value="it">Italian</option><option value="nl">Dutch</option><option value="ja">Japanese</option></select>
+      <label>Quality</label><div><div class="seg" id="fqual"></div></div>
+      <div class="help">Best runs Whisper large v3 plus a second pass on unclear words. Fast uses the turbo model and is about 3x quicker.</div>
+      <label>Quiet voices</label><label class="check"><input type="checkbox" id="fquiet"> Listen again for people far from the mic</label>
+      <div class="help">Transcribes each speaker turn again on a boosted copy of the audio. Adds a few minutes.</div>
+      <label for="fpreset">Caption style</label><select id="fpreset"></select>
+      <label for="fmaxc">Max characters per line</label><div><input type="number" id="fmaxc" value="42" min="16" max="90" style="width:84px"></div>
+    </div>
+    <div class="err" id="s2err"></div>
+  </div>
+
+  <div class="bd" id="s3" style="display:none">
+    <div class="runner">
+      <div class="big" id="rnmsg">Starting</div>
+      <div class="bar"><i id="rnbar"></i></div>
+      <ol id="rnsteps"></ol>
+      <div class="hint" id="rnhint">A 2 minute clip takes a few minutes. You can close this window; it keeps going and the project shows its progress.</div>
+      <div class="err" id="rnerr"></div>
+    </div>
+  </div>
+
+  <div class="ft">
+    <button class="quiet" id="back">Back</button>
+    <span class="grow"></span>
+    <button id="cancelrun" style="display:none">Stop</button>
+    <button class="primary" id="next" disabled>Next</button>
+  </div>
+</div></div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+let PROJ = [], timer = null, wzStep = 1, picked = null, watching = null;
+const STEPS = ["Rendering the timeline in Resolve", "Reading video", "Pulling audio", "Transcribing", "Re-checking shaky bits", "Working out who is talking", "Listening for quiet voices", "Building caption lines"];
+
+async function api(path, body) {
+  const r = await fetch(path, body === undefined ? {} : { method: "POST", body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.msg || r.status);
+  return j;
+}
+function dur(s) { if (!s && s !== 0) return ""; s = Math.round(s); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+function ago(t) {
+  if (!t) return ""; const d = (Date.now() / 1000 - t);
+  if (d < 60) return "just now"; if (d < 3600) return Math.floor(d / 60) + "m ago"; if (d < 86400) return Math.floor(d / 3600) + "h ago";
+  if (d < 86400 * 7) return Math.floor(d / 86400) + "d ago"; return new Date(t * 1000).toLocaleDateString();
+}
+
+// ---------- project grid ----------
+async function refresh() {
+  let j;
+  try { j = await api("/api/projects"); } catch (e) { return; }
+  PROJ = j.projects; draw(); git(j.sync, j.git);
+  clearTimeout(timer);
+  timer = setTimeout(refresh, PROJ.some(p => p.status === "processing") ? 1200 : 6000);
+  if (watching) watchTick();
+}
+function git(sy, on) {
+  const el = $("#gitstat"); if (!on) return el.textContent = "";
+  el.textContent = { pending: "Sync waiting", syncing: "Syncing", error: "Sync failed", ok: "Synced" }[sy.state] || "";
+  el.classList.toggle("bad", sy.state === "error"); el.title = sy.msg || "";
+}
+function draw() {
+  const q = $("#search").value.trim().toLowerCase();
+  const list = PROJ.filter(p => !q || p.name.toLowerCase().includes(q));
+  $("#count").textContent = PROJ.length ? `${PROJ.length} project${PROJ.length === 1 ? "" : "s"}, latest edit first` : "";
+  const g = $("#grid"); g.innerHTML = "";
+  if (!PROJ.length) {
+    g.style.display = "block";
+    g.innerHTML = `<div class="empty"><h2>No projects yet</h2><p>Pick a video and it gets transcribed, split by speaker and opened in the editor. Or run <kbd>python -m subtitles.demo</kbd> for a sample project.</p><button class="primary" onclick="openWizard()">New project</button></div>`;
+    return;
+  }
+  g.style.display = "";
+  if (!q) {
+    const nc = document.createElement("div"); nc.className = "proj newproj"; nc.tabIndex = 0;
+    nc.innerHTML = `<div class="poster"><div><span class="plus">+</span></div></div><div><div class="nm">New project</div><div class="mt"><span>File or Resolve timeline</span></div><div class="mt"><kbd>Cmd</kbd><kbd>N</kbd></div></div>`;
+    nc.onclick = () => openWizard(); nc.onkeydown = e => { if (e.key === "Enter") openWizard(); }; g.appendChild(nc);
+  }
+  if (q && !list.length) g.insertAdjacentHTML("beforeend", `<div class="mute">Nothing matches "${esc(q)}".</div>`);
+  for (const p of list) {
+    const c = document.createElement("div"); c.className = "proj"; c.tabIndex = 0;
+    const run = p.status === "processing" && p.job && p.job.state === "running";
+    const meta = [dur(p.duration), p.has_captions ? p.lines + " lines" : "", p.speakers ? p.speakers + " speaker" + (p.speakers === 1 ? "" : "s") : ""].filter(Boolean).map(x => `<span>${x}</span>`);
+    const state = [`<span>${ago(p.updated)}</span>`];
+    if (run) state.push(`<span class="run">${p.job.kind === "render" ? "Rendering" : "Transcribing"}</span>`);
+    else if (p.status === "error" && !p.has_captions) state.push(`<span class="bad" title="${esc(p.error)}">Failed</span>`);
+    if (p.flagged) state.push(`<span class="flag" title="Lines the pipeline wasnt sure about">${p.flagged} to check</span>`);
+    if (!p.video_ok && !run) state.push(`<span class="bad" title="${esc(p.video)}">Video missing</span>`);
+    c.innerHTML = `<div class="poster" style="background-image:url('/p/${encodeURIComponent(p.slug)}/thumb.jpg?${Math.floor(p.updated || 0)}')">
+        ${p.video_ok || run ? "" : `<div class="nov">Source video not found. Open the project to relink it.</div>`}
+        ${run ? `<div class="prog"><div>${esc(p.job.msg || "Working")}</div><div class="bar"><i style="width:${Math.round((p.job.pct || 0) * 100)}%"></i></div></div>` : ""}
+      </div>
+      <div><div class="nm" title="${esc(p.name)}">${esc(p.name)}</div><div class="mt">${meta.join("")}</div><div class="mt">${state.join("")}</div></div>
+      <button class="more" title="More" aria-label="More actions for ${esc(p.name)}">&middot;&middot;&middot;</button>`;
+    c.onclick = e => { if (e.target.closest(".more")) return; openProject(p); };
+    c.onkeydown = e => { if (e.key === "Enter" && e.target === c) openProject(p); };
+    c.querySelector(".more").onclick = e => { e.stopPropagation(); menu(e, p); };
+    c.oncontextmenu = e => { e.preventDefault(); menu(e, p); };
+    g.appendChild(c);
+  }
+}
+function openProject(p) {
+  if (p.status === "processing") return watch(p.slug);
+  if (!p.has_captions) return watch(p.slug);
+  location.href = `/p/${encodeURIComponent(p.slug)}/`;
+}
+function menu(e, p) {
+  const m = $("#menu"); m.innerHTML = "";
+  const P = `/p/${encodeURIComponent(p.slug)}`;
+  const acts = [
+    ["Open", () => openProject(p)],
+    ["Rename", async () => { const n = prompt("New name", p.name); if (n && n.trim()) { await api(P + "/meta", { name: n }); refresh(); } }],
+    ["Duplicate", async () => { const r = await api(P + "/duplicate", {}); refresh(); }],
+    ["Show in Finder", () => api(P + "/reveal", {})],
+    0,
+    ["Re-transcribe", async () => { if (!confirm(`Re-transcribe "${p.name}"? Every line gets replaced (the current version is kept in .history).`)) return; try { await api(P + "/rerun", { from: "probe" }); watch(p.slug); } catch (er) { alert(er.message); } }],
+    0,
+    ["Move to trash", async () => { if (!confirm(`Move "${p.name}" to the trash? It goes to projects/.trash so you can still get it back.`)) return; try { await api(P + "/delete", {}); refresh(); } catch (er) { alert(er.message); } }, "danger"],
+  ];
+  acts.forEach(a => {
+    if (!a) return m.appendChild(document.createElement("hr"));
+    const b = document.createElement("button"); b.textContent = a[0]; if (a[2]) b.className = a[2];
+    b.onclick = () => { m.style.display = "none"; a[1](); }; m.appendChild(b);
+  });
+  m.style.display = "block";
+  m.style.left = Math.min(e.clientX, innerWidth - 200) + "px"; m.style.top = Math.min(e.clientY, innerHeight - m.offsetHeight - 8) + "px";
+}
+addEventListener("click", e => { if (!e.target.closest("#menu") && !e.target.closest(".more")) $("#menu").style.display = "none"; });
+$("#search").oninput = draw;
+
+// ---------- new project wizard ----------
+const cfg = { speakers: 0, quality: "best" };
+function setStep(n) {
+  wzStep = n;
+  [1, 2, 3].forEach(i => $("#s" + i).style.display = i === n ? "" : "none");
+  document.querySelectorAll("#wzsteps span").forEach((s, i) => s.classList.toggle("on", i < n));
+  $("#back").style.visibility = n === 2 ? "visible" : "hidden";
+  $("#cancelrun").style.display = n === 3 ? "" : "none";
+  $("#next").textContent = n === 1 ? "Next" : n === 2 ? "Start transcribing" : "Open editor";
+  $("#wzsteps").setAttribute("aria-label", `Step ${n} of 3`);
+  $("#next").disabled = n === 1 ? !picked : n === 3;
+  $("#wztitle").textContent = n === 3 ? (watching ? (PROJ.find(p => p.slug === watching) || {}).name || "Working" : "Working") : "New project";
+}
+async function openWizard() {
+  picked = null; watching = null; $("#s1err").textContent = ""; $("#s2err").textContent = ""; $("#pathin").value = "";
+  $("#resolvelist").style.display = "none";
+  setStep(1); $("#wz").classList.add("on");
+  loadRecent();
+  const pre = await api("/presets").catch(() => ({}));
+  $("#fpreset").innerHTML = `<option value="">Default</option>` + Object.keys(pre).map(k => `<option>${esc(k)}</option>`).join("");
+}
+async function loadRecent() {
+  const box = $("#recent");
+  try {
+    const list = await api("/api/recent");
+    box.innerHTML = list.length ? "" : `<div class="note">No videos in those folders. Choose a file or paste a path.</div>`;
+    list.forEach(f => {
+      const it = document.createElement("div"); it.className = "it";
+      it.innerHTML = `<span class="n" title="${esc(f.path)}">${esc(f.name)}</span><span class="m">${f.used ? "<span>Already a project</span>" : ""}<span>${f.size_mb} MB</span><span>${ago(f.mtime)}</span></span>`;
+      it.onclick = () => usePath(f.path); box.appendChild(it);
+    });
+  } catch (e) { box.innerHTML = `<div class="note">Couldnt list recent videos: ${esc(e.message)}</div>`; }
+}
+async function usePath(path) {
+  $("#s1err").textContent = "";
+  try { const r = await api("/api/probe", { path }); choose(r.info); } catch (e) { $("#s1err").textContent = e.message; }
+}
+function choose(info) {
+  picked = info;
+  $("#pkname").textContent = info.resolve ? "Resolve timeline: " + info.name : info.name;
+  $("#pkmeta").innerHTML = [dur(info.duration), info.width && info.height ? `${info.width}x${info.height}` : "", info.fps ? info.fps + " fps" : "",
+    info.resolve ? "Rendered out of Resolve when you start" : info.size_mb + " MB"].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join("");
+  $("#pkname").title = info.path;
+  $("#fname").value = info.name;
+  if (info.width && info.height && info.width > info.height) $("#s2err").textContent = "Heads up: this video is landscape, captions are laid out for 1080x1920 vertical.";
+  else $("#s2err").textContent = "";
+  setStep(2); $("#fname").focus(); $("#fname").select();
+}
+$("#pick").onclick = async () => {
+  $("#pick").disabled = true; $("#s1err").textContent = "";
+  try { const r = await api("/api/pick-video", {}); if (r.ok) choose(r.info); } catch (e) { $("#s1err").textContent = e.message; }
+  $("#pick").disabled = false;
+};
+$("#fromres").onclick = async () => {
+  $("#fromres").disabled = true; $("#s1err").textContent = "";
+  try {
+    const r = await api("/api/resolve/timeline", {});
+    if (!r.ok) throw new Error(r.msg);
+    $("#resolvelist").style.display = ""; const box = $("#reslist"); box.innerHTML = "";
+    const whole = document.createElement("div"); whole.className = "it";
+    whole.innerHTML = `<span class="n"><b>Whole timeline: ${esc(r.timeline)}</b></span><span class="m"><span>${dur(r.duration)}</span><span>${esc(r.project)}</span><span>Renders a copy of your edit first</span></span>`;
+    whole.onclick = () => choose({ resolve: true, name: r.timeline, timeline: r.timeline, resolve_project: r.project, duration: r.duration, fps: r.fps, width: r.width, height: r.height, path: "" });
+    box.appendChild(whole);
+    (r.infos || []).forEach(f => { const it = document.createElement("div"); it.className = "it"; it.innerHTML = `<span class="n" title="${esc(f.path)}">${esc(f.name)}</span><span class="m"><span>${dur(f.duration)}</span><span>One source clip</span></span>`; it.onclick = () => choose(f); box.appendChild(it); });
+  } catch (e) { $("#s1err").textContent = "Resolve: " + e.message; }
+  $("#fromres").disabled = false;
+};
+$("#pathgo").onclick = () => $("#pathin").value.trim() && usePath($("#pathin").value.trim());
+$("#pathin").onkeydown = e => { if (e.key === "Enter") $("#pathgo").click(); };
+$("#change").onclick = () => setStep(1);
+$("#back").onclick = () => setStep(1);
+function seg(el, vals, key) {
+  el.innerHTML = vals.map(([v, l]) => `<button data-v="${v}" class="${String(cfg[key]) === String(v) ? "on" : ""}">${l}</button>`).join("");
+  el.querySelectorAll("button").forEach(b => b.onclick = () => { cfg[key] = isNaN(+b.dataset.v) ? b.dataset.v : +b.dataset.v; el.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); });
+}
+seg($("#fspk"), [[0, "Auto"], [1, "1"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6"], [7, "7"], [8, "8"]], "speakers");
+seg($("#fqual"), [["best", "Best"], ["fast", "Fast"]], "quality");
+$("#fspk").setAttribute("role", "group"); $("#fqual").setAttribute("role", "group");
+$("#fnames").oninput = () => {
+  // typing names is a good hint for the speaker count
+  const n = $("#fnames").value.split(",").filter(x => x.trim()).length;
+  if (n > 1 && cfg.speakers === 0) $("#fspk").querySelector(`[data-v="${n}"]`).click();
+};
+
+$("#next").onclick = async () => {
+  if (wzStep === 1 && picked) return setStep(2);
+  if (wzStep === 2) {
+    $("#next").disabled = true; $("#s2err").textContent = "";
+    const body = {
+      source: picked.resolve ? "resolve" : "file", timeline: picked.timeline, resolve_project: picked.resolve_project, fps: picked.fps, duration: picked.duration,
+      video: picked.path, name: $("#fname").value.trim() || picked.name, speakers: cfg.speakers, quality: cfg.quality,
+      names: $("#fnames").value, vocab: $("#fvocab").value, lang: $("#flang").value, quiet: $("#fquiet").checked,
+      preset: $("#fpreset").value, max_chars: +$("#fmaxc").value || 42,
+    };
+    try { const r = await api("/api/projects", body); watch(r.slug); refresh(); }
+    catch (e) { $("#s2err").textContent = e.message; $("#next").disabled = false; }
+    return;
+  }
+  if (wzStep === 3 && watching) location.href = `/p/${encodeURIComponent(watching)}/`;
+};
+$("#cancelrun").onclick = async () => { if (watching && confirm("Stop this run?")) await api(`/p/${encodeURIComponent(watching)}/cancel`, {}); };
+$("#wzx").onclick = () => { $("#wz").classList.remove("on"); watching = null; if (location.hash) history.replaceState(null, "", "/"); };
+$("#wz").onclick = e => { if (e.target.id === "wz" && wzStep !== 2) $("#wzx").click(); };
+
+// ---------- progress for one project ----------
+function watch(slug) {
+  watching = slug; watchTick.opened = false; $("#rnerr").textContent = ""; $("#rnmsg").textContent = "Starting"; $("#rnbar").style.width = "0%"; $("#rnsteps").innerHTML = "";
+  $("#wz").classList.add("on"); setStep(3);
+  history.replaceState(null, "", "#" + encodeURIComponent(slug));
+  refresh();
+}
+function watchTick() {
+  const p = PROJ.find(x => x.slug === watching);
+  if (!p) return;
+  $("#wztitle").textContent = p.name;
+  const j = p.job || {};
+  const st = p.settings || {};
+  const plan = STEPS.filter(s => !(s === "Rendering the timeline in Resolve" && p.source !== "resolve") && !(s === "Re-checking shaky bits" && st.quality === "fast") && !(s === "Listening for quiet voices" && !st.quiet)
+    && !((s === "Working out who is talking" || s === "Listening for quiet voices") && +st.speakers === 1));
+  const cur = plan.findIndex(s => (j.msg || "").startsWith(s));
+  const finished = j.state === "done" || (p.status === "ready" && p.has_captions && j.state !== "running");
+  $("#rnsteps").innerHTML = plan.map((s, i) => `<li class="${finished || (cur >= 0 && i < cur) ? "done" : i === cur ? "cur" : ""}">${s}</li>`).join("");
+  $("#rnbar").style.width = Math.round((finished ? 1 : j.pct || 0) * 100) + "%";
+  if (j.state === "running") {
+    $("#rnmsg").textContent = j.msg || "Working";
+    const el = Math.round(Date.now() / 1000 - j.started);
+    $("#rnhint").textContent = `${dur(el)} so far. You can close this window; it keeps going and the project shows its progress.`;
+    $("#cancelrun").style.display = ""; $("#next").disabled = true;
+  } else if (finished) {
+    $("#rnmsg").textContent = `Done. ${p.lines} lines, ${p.speakers} speaker${p.speakers === 1 ? "" : "s"}${p.flagged ? `, ${p.flagged} flagged to check` : ""}.`;
+    $("#rnhint").textContent = "Opening the editor";
+    $("#cancelrun").style.display = "none"; $("#next").disabled = false;
+    if (!watchTick.opened) { watchTick.opened = true; setTimeout(() => { if (watching === p.slug) location.href = `/p/${encodeURIComponent(p.slug)}/`; }, 900); }
+  } else {
+    $("#rnmsg").textContent = p.error === "cancelled" || j.state === "cancelled" ? "Stopped" : "Transcribing failed";
+    $("#rnerr").textContent = p.error && p.error !== "cancelled" ? p.error : (j.msg || "");
+    $("#rnhint").textContent = "";
+    $("#cancelrun").style.display = "none";
+    $("#next").textContent = "Try again"; $("#next").disabled = false;
+    $("#next").onclick = async () => { $("#next").onclick = null; try { await api(`/p/${encodeURIComponent(p.slug)}/rerun`, { from: "probe" }); location.reload(); } catch (e) { $("#rnerr").textContent = e.message; } };
+  }
+}
+
+// ---------- misc ----------
+$("#newbtn").onclick = openWizard;
+addEventListener("keydown", e => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "n") { e.preventDefault(); openWizard(); }
+  if (e.key === "Escape" && $("#wz").classList.contains("on") && wzStep !== 3) $("#wzx").click();
+});
+$("#quit").onclick = async () => {
+  let r = await fetch("/quit", { method: "POST", body: "{}" });
+  if (r.status === 409) {
+    if (!confirm((await r.json()).msg + "\n\nQuit anyway? It stops.")) return;
+    r = await fetch("/quit", { method: "POST", body: JSON.stringify({ force: true }) });
+  }
+  document.body.innerHTML = `<div class="closed"><div><h2>App closed</h2><p>Everything is saved. You can close this tab.<br>Start it again with the Subtitles app or <kbd>python -m subtitles</kbd>.</p></div></div>`;
+  setTimeout(() => window.close(), 400);
+};
+function fromHash() {
+  const h = decodeURIComponent(location.hash.slice(1));
+  if (h && h !== watching && PROJ.find(p => p.slug === h)) watch(h);
+}
+addEventListener("hashchange", fromHash);
+refresh().then(fromHash);
+</script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+/* app.css
+   shared tokens + controls for the launcher and the editor.
+   graphite ground so footage reads true, one signal color borrowed from old broadcast subtitles.
+   speaker colors carry everything else, so the chrome stays neutral. */
+
+/* poppins for the whole ui, bundled in web/fonts so it works offline (OFL, see web/fonts/OFL.txt) */
+@font-face { font-family: "Poppins UI"; src: url("/ui/fonts/poppins-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Poppins UI"; src: url("/ui/fonts/poppins-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Poppins UI"; src: url("/ui/fonts/poppins-latin-600-normal.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Poppins UI"; src: url("/ui/fonts/poppins-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Poppins UI"; src: url("/ui/fonts/poppins-latin-900-normal.woff2") format("woff2"); font-weight: 900; font-display: swap; }
+
+:root {
+  --ink: #1b1c1e;      /* ground */
+  --well: #131416;     /* inputs, video well, timeline */
+  --raise: #242528;    /* buttons, panels */
+  --raise-2: #2c2d31;  /* hover */
+  --rule: #34353a;
+  --rule-soft: #2a2b2f;
+  --text: #ece9e3;
+  --mute: #9a968e;
+  --faint: #6c6963;
+  --signal: #f2c230;   /* subtitle yellow: primary action, selection, playhead */
+  --signal-ink: #1d1806;
+  --signal-wash: rgba(242, 194, 48, .09);
+  --danger: #ef6f61;
+  --warn: #f0a24a;
+  --ok: #7cc79b;
+
+  --r-input: 5px;
+  --r-btn: 6px;
+  --r-panel: 9px;
+  --r-modal: 14px;
+
+  --ui: "Poppins UI", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --display: 900 46px/1 var(--ui);
+  --pop: 0 18px 50px rgba(0, 0, 0, .45), 0 0 0 1px rgba(255, 255, 255, .04);
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--ink); color: var(--text); font: 12.5px/1.5 var(--ui); -webkit-font-smoothing: antialiased; }
+::selection { background: rgba(242, 194, 48, .35); }
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 28px; padding: 0 11px; border-radius: var(--r-btn);
+  background: var(--raise); border: 1px solid var(--rule); cursor: pointer; white-space: nowrap;
+  transition: background .12s, border-color .12s;
+}
+button:hover { background: var(--raise-2); border-color: #45464c; }
+button:active { transform: translateY(.5px); }
+button:disabled { opacity: .42; cursor: default; transform: none; }
+button.primary { background: var(--signal); border-color: var(--signal); color: var(--signal-ink); font-weight: 600; }
+button.primary:hover { background: #f7cf4f; border-color: #f7cf4f; }
+button.quiet { background: transparent; border-color: transparent; color: var(--mute); }
+button.quiet:hover { background: var(--raise); color: var(--text); }
+button.danger { color: var(--danger); }
+button.small { height: 22px; padding: 0 7px; font-size: 12px; }
+
+:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+button:focus:not(:focus-visible) { outline: none; }
+
+input, select, textarea {
+  background: var(--well); border: 1px solid var(--rule); border-radius: var(--r-input);
+  height: 28px; padding: 0 8px; min-width: 0;
+}
+textarea { height: auto; padding: 6px 8px; }
+input::placeholder, textarea::placeholder { color: var(--faint); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--signal); box-shadow: 0 0 0 3px rgba(242, 194, 48, .14); }
+select { padding-right: 4px; }
+input[type=checkbox] { accent-color: var(--signal); height: auto; width: 14px; height: 14px; margin: 0; }
+input[type=range] { accent-color: var(--signal); height: auto; padding: 0; border: none; background: none; box-shadow: none; }
+input[type=color] { padding: 2px; height: 28px; width: 40px; cursor: pointer; }
+input[type=number] { font-variant-numeric: tabular-nums; }
+
+kbd {
+  display: inline-block; min-width: 20px; padding: 1px 6px; text-align: center;
+  background: var(--raise); border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 5px;
+  font: 11px/1.5 var(--ui); color: var(--text);
+}
+
+.mute { color: var(--mute); }
+.err { color: var(--danger); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* progress bar, used by jobs everywhere */
+.bar { height: 4px; background: rgba(255, 255, 255, .1); border-radius: 2px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--signal); border-radius: inherit; transition: width .35s ease-out; }
+
+/* context menus */
+.menu {
+  position: fixed; display: none; z-index: 60; min-width: 200px; padding: 4px;
+  background: #26272a; border: 1px solid var(--rule); border-radius: var(--r-panel); box-shadow: var(--pop);
+}
+.menu button { display: flex; justify-content: flex-start; width: 100%; height: 28px; border: none; background: transparent; border-radius: 5px; }
+.menu button:hover { background: var(--raise-2); }
+.menu button.danger { color: var(--danger); }
+.menu hr { border: none; border-top: 1px solid var(--rule-soft); margin: 4px 2px; }
+
+/* modals */
+.modal { position: fixed; inset: 0; display: none; place-items: center; padding: 16px; z-index: 50; background: rgba(8, 8, 9, .62); backdrop-filter: blur(3px); }
+.modal.on { display: grid; animation: fade .14s ease-out; }
+.sheet { background: var(--ink); border: 1px solid var(--rule); border-radius: var(--r-modal); box-shadow: var(--pop); display: flex; flex-direction: column; max-height: calc(100vh - 32px); }
+.modal.on .sheet { animation: lift .18s cubic-bezier(.2, .8, .2, 1); }
+
+/* segmented choice */
+.seg { display: inline-flex; flex-wrap: wrap; background: var(--well); border: 1px solid var(--rule); border-radius: var(--r-btn); padding: 2px; gap: 2px; }
+.seg button { height: 24px; border: none; background: transparent; color: var(--mute); padding: 0 10px; border-radius: 4px; }
+.seg button:hover { color: var(--text); background: var(--raise); }
+.seg button.on { background: var(--raise-2); color: var(--text); box-shadow: inset 0 0 0 1px #4a4b51; }
+
+@keyframes fade { from { opacity: 0; } }
+@keyframes lift { from { opacity: 0; transform: translateY(6px) scale(.99); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
