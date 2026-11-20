@@ -1,0 +1,23 @@
+# env / caches
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+.models/
+editor.log
+
+# your caption projects stay out of this repo (point SUBS_PROJECTS somewhere else, or keep them here)
+projects/
+
+# built launcher
+Subtitles.app/
+
+# renders and big generated files
+*.mov
+*.mp4
+*.wav
+*.log
+renders/
+export/
+.history/

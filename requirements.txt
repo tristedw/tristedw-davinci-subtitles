@@ -1,0 +1,6 @@
+# apple silicon, python 3.11+
+mlx-whisper
+sherpa-onnx
+numpy
+soundfile
+pillow
