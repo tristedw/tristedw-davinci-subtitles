@@ -20,6 +20,20 @@ PY="$REPO/.venv/bin/python"
 [ -x "$PY" ] || { echo "run ./install.sh first, there's no .venv yet"; exit 1; }
 [ "$(uname -s)" = "Darwin" ] || { echo "the Resolve install is mac only for now"; exit 1; }
 
+# admin for the panel folder: sudo in a terminal, the normal macOS password dialog otherwise
+as_admin() {
+  # $1 is a shell snippet. written to a file first so no quoting has to survive applescript
+  if [ -t 0 ]; then
+    sudo /bin/sh -c "$1"
+  else
+    local f
+    f=$(mktemp /tmp/subtitles-admin.XXXXXX)
+    printf '%s\n' "$1" > "$f"
+    osascript -e "do shell script \"/bin/sh $f\" with administrator privileges with prompt \"Subtitles wants to add its panel to DaVinci Resolve.\""
+    rm -f "$f"
+  fi
+}
+
 USER_RES="$HOME/Library/Application Support/Blackmagic Design/DaVinci Resolve"
 SYS_RES="/Library/Application Support/Blackmagic Design/DaVinci Resolve"
 if [ ! -d "/Applications/DaVinci Resolve" ] && [ ! -d "$USER_RES" ]; then
@@ -60,10 +74,8 @@ if [ $PANEL = 1 ]; then
     cp -R "$(dirname "$SAMPLE")" "$TMP/com.tristedw.subtitles"
     "$PY" resolve/workflow-integration/configure.py "$TMP/com.tristedw.subtitles" "$REPO" "$PORT" | sed 's/^/  /'
     DEST="$SYS_RES/Workflow Integration Plugins"
-    echo "  copying into $DEST (needs your password)"
-    sudo mkdir -p "$DEST"
-    sudo rm -rf "$DEST/com.tristedw.subtitles"
-    sudo cp -R "$TMP/com.tristedw.subtitles" "$DEST/"
+    echo "  copying into $DEST (asks for your password)"
+    as_admin "mkdir -p '$DEST' && rm -rf '$DEST/com.tristedw.subtitles' && cp -R '$TMP/com.tristedw.subtitles' '$DEST/'"
     echo "  Workspace > Workflow Integrations > Subtitles"
   fi
 fi

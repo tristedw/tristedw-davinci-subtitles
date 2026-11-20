@@ -21,7 +21,14 @@ if ! command -v ffmpeg >/dev/null; then
   fi
 fi
 
-PY=${PYTHON:-python3}
+# want 3.11+. homebrew's comes first since the macOS one is too old
+PY=${PYTHON:-}
+if [ -z "$PY" ]; then
+  for c in /opt/homebrew/bin/python3.12 /opt/homebrew/bin/python3.13 /opt/homebrew/bin/python3.11 python3; do
+    if command -v "$c" >/dev/null && "$c" -c 'import sys; sys.exit(sys.version_info < (3, 11))' 2>/dev/null; then PY=$c; break; fi
+  done
+fi
+[ -n "$PY" ] || { echo "need python 3.11 or newer: brew install python@3.12"; exit 1; }
 if [ ! -x .venv/bin/python ]; then
   echo "making .venv"
   "$PY" -m venv .venv

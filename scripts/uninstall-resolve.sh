@@ -12,6 +12,10 @@ for f in "Subtitles" "Subtitles - Caption Timeline" "Subtitles - Place Captions"
 done
 if [ -d "$PANEL" ]; then
   echo "removing the Workflow Integrations panel (needs your password)"
-  sudo rm -rf "$PANEL"
+  if [ -t 0 ]; then
+    sudo rm -rf "$PANEL"
+  else
+    osascript -e "do shell script \"rm -rf '$PANEL'\" with administrator privileges"
+  fi
 fi
 echo "done. restart Resolve to drop the menu entries."
