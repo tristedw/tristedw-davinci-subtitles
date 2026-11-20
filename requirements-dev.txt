@@ -1,0 +1,6 @@
+# what CI needs: the editor, renderer and exporters run anywhere, transcription is mac only
+numpy
+soundfile
+pillow
+pytest
+ruff

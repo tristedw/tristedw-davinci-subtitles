@@ -1,0 +1,19 @@
+[project]
+name = "davinci-subtitles"
+version = "1.0.0"
+description = "Per speaker captions for short form video, with a local editor and a DaVinci Resolve bridge"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Tristan Edwards" }]
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 160
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]
+ignore = ["E501", "E741", "B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
