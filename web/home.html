@@ -454,7 +454,20 @@ $("#quit").onclick = async () => {
   setTimeout(() => window.close(), 400);
 };
 function fromHash() {
-  const h = decodeURIComponent(location.hash.slice(1));
+  const raw = location.hash.slice(1);
+  // #new=<path>&name=<timeline> comes from Workspace > Scripts > Subtitles - Caption Timeline in Resolve
+  const q = new URLSearchParams(raw);
+  if (q.get("new")) {
+    history.replaceState(null, "", "/");
+    openWizard().then(async () => {
+      await usePath(q.get("new"));
+      if (q.get("name")) $("#fname").value = q.get("name");
+      if (picked) { $("#pkname").textContent = "Resolve timeline: " + (q.get("name") || picked.name); }
+    });
+    return;
+  }
+  if (raw === "resolve") { history.replaceState(null, "", "/"); openWizard().then(() => $("#fromres").click()); return; }
+  const h = decodeURIComponent(raw);
   if (h && h !== watching && PROJ.find(p => p.slug === h)) watch(h);
 }
 addEventListener("hashchange", fromHash);

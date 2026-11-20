@@ -73,3 +73,16 @@ def test_save_refuses_stale_writes(app):
     # same base again is now stale, the file moved on
     code, body = post(app + "/p/clip/save", {**data, "_base": base - 100})
     assert code == 409 and json.loads(body)["conflict"]
+
+
+def test_paths_and_last_render(app, tmp_path):
+    code, body = get(app + "/api/paths")
+    assert code == 200 and json.loads(body)["incoming"].endswith(".incoming")
+    assert json.loads(get(app + "/api/last-render")[1]) == {}
+    mov = tmp_path / "clip" / "clip_captions_1.mov"
+    mov.write_bytes(b"x")
+    m = json.loads((tmp_path / "clip" / "project.json").read_text())
+    m.update(clip_name="clip_captions", last_render={"at": 5, "file": str(mov)})
+    (tmp_path / "clip" / "project.json").write_text(json.dumps(m))
+    last = json.loads(get(app + "/api/last-render")[1])
+    assert last["file"] == str(mov) and last["clip_name"] == "clip_captions"

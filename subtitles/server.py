@@ -235,12 +235,32 @@ def create_project(body):
     slug = slugify(name)
     d = PROJECTS / slug
     (d / "work").mkdir(parents=True)
+    if Path(video).resolve().parent == (PROJECTS / ".incoming").resolve():
+        # a timeline render from the Resolve menu, it belongs to this project now
+        dst = d / "work" / "timeline.mp4"
+        shutil.move(video, dst)
+        video = str(dst)
     m = {"name": name, "video": video, "clip_name": re.sub(r"\W+", "_", slug) + "_captions", "fps": info["fps"],
          "duration": info["duration"], "width": info["width"], "height": info["height"], "created": time.time(),
          "status": "processing", "settings": settings}
     (d / "project.json").write_text(json.dumps(m, indent=2))
     start_pipeline(slug, "probe")
     return slug
+
+
+def last_render():
+    # newest caption render across projects, for Workspace > Scripts > Subtitles - Place Captions
+    best = {}
+    for d in PROJECTS.iterdir() if PROJECTS.exists() else []:
+        try:
+            m = json.loads((d / "project.json").read_text())
+        except Exception:
+            continue
+        lr = m.get("last_render") or {}
+        if lr.get("file") and Path(lr["file"]).exists() and lr.get("at", 0) > best.get("at", 0):
+            best = {"at": lr["at"], "file": lr["file"], "name": m.get("name", d.name), "slug": d.name,
+                    "clip_name": m.get("clip_name") or d.name + "_captions"}
+    return best
 
 
 def recent_videos():
@@ -400,8 +420,8 @@ def run_render(slug):
     m = meta_of(slug)
     m["last_render"] = {"at": time.time(), "file": str(mov), "resolve": res.get("msg", "")}
     write_meta(slug, m)
-    j.update(state="done", pct=1, out=str(mov),
-             msg=f"done in {int(time.time() - j['started'])}s, " + (res.get("msg") or "") + ("" if res.get("ok") else f" (file is in {d.name}/renders)"))
+    hint = "" if res.get("ok") else f". The file is in {d.name}/renders, or use Workspace > Scripts > Subtitles - Place Captions in Resolve"
+    j.update(state="done", pct=1, out=str(mov), msg=f"done in {int(time.time() - j['started'])}s, " + (res.get("msg") or "") + hint)
 
 
 _peaks = {}
@@ -499,6 +519,12 @@ class H(BaseHTTPRequestHandler):
                 return self.j({"ok": True, "sync": sync, "git": git_ok()})
             if path == "/api/projects":
                 return self.j({"projects": list_projects(), "sync": sync, "git": git_ok()})
+            if path == "/api/paths":
+                # where the Resolve menu scripts drop timeline renders before a project picks them up
+                (PROJECTS / ".incoming").mkdir(parents=True, exist_ok=True)
+                return self.j({"projects": str(PROJECTS), "incoming": str(PROJECTS / ".incoming")})
+            if path == "/api/last-render":
+                return self.j(last_render())
             if path == "/api/recent":
                 return self.j(recent_videos())
             if path == "/defaults":
