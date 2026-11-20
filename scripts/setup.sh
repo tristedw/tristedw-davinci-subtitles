@@ -36,17 +36,19 @@ fi
 .venv/bin/pip install -q --upgrade pip
 .venv/bin/pip install -q -r requirements.txt
 
+# progress bar in a terminal, quiet in a log
+if [ -t 1 ]; then BAR="-#"; else BAR="-sS"; fi
 M=.models/sherpa
 mkdir -p "$M"
 REL=https://github.com/k2-fsa/sherpa-onnx/releases/download
 if [ ! -f "$M/sherpa-onnx-pyannote-segmentation-3-0/model.onnx" ]; then
   echo "downloading speaker segmentation model"
-  curl -fL# "$REL/speaker-segmentation-models/sherpa-onnx-pyannote-segmentation-3-0.tar.bz2" | tar xj -C "$M"
+  curl -fL $BAR "$REL/speaker-segmentation-models/sherpa-onnx-pyannote-segmentation-3-0.tar.bz2" | tar xj -C "$M"
 fi
 if [ ! -f "$M/nemo_en_titanet_large.onnx" ]; then
   echo "downloading speaker embedding model"
   # the typo in the release tag is upstream's
-  curl -fL# -o "$M/nemo_en_titanet_large.onnx" "$REL/speaker-recongition-models/nemo_en_titanet_large.onnx"
+  curl -fL $BAR -o "$M/nemo_en_titanet_large.onnx" "$REL/speaker-recongition-models/nemo_en_titanet_large.onnx"
 fi
 
 echo
